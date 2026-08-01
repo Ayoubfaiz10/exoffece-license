@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم التراخيص — LexOffece</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --border: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1;
+    --green: #22c55e; --red: #ef4444; --amber: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, sans-serif; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .stat .num { font-size: 28px; font-weight: 700; }
+  .stat .lbl { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .stat.green .num { color: var(--green); }
+  .stat.red .num { color: var(--red); }
+  .stat.amber .num { color: var(--amber); }
+  .stat.violet .num { color: var(--accent); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select, button { font-size: 14px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0b1220; color: var(--text); }
+  input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  button { cursor: pointer; background: var(--accent); border: none; font-weight: 600; }
+  button:hover { filter: brightness(1.15); }
+  button.ghost { background: transparent; border: 1px solid var(--border); }
+  button.danger { background: var(--red); }
+  button.green { background: var(--green); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td { vertical-align: top; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge.green { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge.red { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge.amber { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge.muted { background: rgba(148,163,184,.15); color: var(--muted); }
+  .key { font-family: 'Consolas', monospace; font-weight: 700; letter-spacing: 1px; }
+  .mono { font-family: 'Consolas', monospace; font-size: 12px; color: var(--muted); }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .actions button { padding: 5px 10px; font-size: 12px; }
+  #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 10; }
+  #loginBox { width: 320px; }
+  .hidden { display: none !important; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--accent); padding: 12px 24px; border-radius: 10px; font-size: 14px; z-index: 20; opacity: 0; transition: opacity .3s; }
+  .toast.show { opacity: 1; }
+  .search { width: 220px; }
+  .detail-toggle { color: var(--accent); cursor: pointer; font-size: 12px; }
+  .machines { margin-top: 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <div id="loginBox" class="card">
+    <h1>لوحة تحكم التراخيص</h1>
+    <p class="sub">LexOffece License Server</p>
+    <label>كلمة المرور</label>
+    <input type="password" id="loginPass" placeholder="••••••••" style="width:100%;margin-bottom:12px">
+    <button id="loginBtn" style="width:100%">دخول</button>
+  </div>
+</div>
+
+<div id="mainArea" class="hidden">
+  <h1>لوحة تحكم التراخيص</h1>
+  <p class="sub">إدارة مفاتيح LexOffece — <button id="logoutBtn" class="ghost" style="padding:3px 10px;font-size:12px">خروج</button></p>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">توليد مفاتيح جديدة</h3>
+    <div class="row">
+      <div><label>العدد</label><input type="number" id="genCount" value="1" min="1" max="100" style="width:80px"></div>
+      <div><label>المدة (أيام)</label><input type="number" id="genDays" value="365" min="1" style="width:100px"></div>
+      <div><label>أقصى أجهزة لكل مفتاح</label><input type="number" id="genMachines" value="1" min="1" style="width:90px"></div>
+      <div><label>ملاحظة (اسم العميل...)</label><input type="text" id="genNote" placeholder="مثال: مكتب فاس" style="width:220px"></div>
+      <div style="align-self:flex-end"><button id="genBtn" class="green">توليد</button></div>
+    </div>
+    <div id="genResult" class="hidden" style="margin-top:12px">
+      <label>المفاتيح المولدة (انسخها للعميل):</label>
+      <textarea id="genKeys" readonly style="width:100%;height:80px;margin-top:4px;direction:ltr;text-align:left"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <h3>التراخيص (<span id="listCount">0</span>)</h3>
+      <div class="row">
+        <input type="text" id="searchBox" class="search" placeholder="بحث بمفتاح أو ملاحظة...">
+        <select id="filterSel">
+          <option value="all">الكل</option>
+          <option value="active">نشط</option>
+          <option value="revoked">معطل</option>
+          <option value="expired">منتهي</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>المفتاح</th>
+            <th>العميل</th>
+            <th>الحالة</th>
+            <th>ينتهي في</th>
+            <th>الأجهزة</th>
+            <th>آخر تفعيل</th>
+            <th>آخر اتصال</th>
+            <th>العمليات</th>
+          </tr>
+        </thead>
+        <tbody id="licTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let token = localStorage.getItem('lx_admin_token') || '';
+
+async function api(url, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(url, { ...opts, headers });
+  if (res.status === 401) { token = ''; localStorage.removeItem('lx_admin_token'); showLogin(); throw new Error('unauthorized'); }
+  const data = await res.json().catch(() => ({}));
+  if (!data.ok) throw new Error(data.error || 'error');
+  return data;
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('ar-MA', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function daysLeft(iso) {
+  if (!iso) return null;
+  const ms = Date.parse(iso) - Date.now();
+  return Math.ceil(ms / 86400000);
+}
+
+function statusBadge(l) {
+  if (l.revoked) return '<span class="badge red">معطل</span>';
+  if (l.expiresAt && Date.parse(l.expiresAt) <= Date.now()) return '<span class="badge amber">منتهي</span>';
+  const dl = daysLeft(l.expiresAt);
+  if (dl !== null && dl <= 7) return '<span class="badge amber">قريب الانتهاء (' + dl + ' يوم)</span>';
+  return '<span class="badge green">نشط</span>';
+}
+
+async function loadStats() {
+  const { stats } = await api('/api/admin/stats');
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat violet"><div class="num">' + stats.total + '</div><div class="lbl">المجموع</div></div>' +
+    '<div class="stat green"><div class="num">' + stats.active + '</div><div class="lbl">نشط</div></div>' +
+    '<div class="stat red"><div class="num">' + stats.revoked + '</div><div class="lbl">معطل</div></div>' +
+    '<div class="stat amber"><div class="num">' + stats.expired + '</div><div class="lbl">منتهي</div></div>' +
+    '<div class="stat"><div class="num">' + stats.machines + '</div><div class="lbl">أجهزة مرتبطة</div></div>';
+}
+
+async function loadLicenses() {
+  const { licenses } = await api('/api/admin/licenses');
+  document.getElementById('listCount').textContent = licenses.length;
+  const q = (document.getElementById('searchBox').value || '').toLowerCase();
+  const f = document.getElementById('filterSel').value;
+  const rows = licenses
+    .filter(l => {
+      if (q && !l.key.toLowerCase().includes(q) && !(l.note || '').toLowerCase().includes(q)) return false;
+      if (f === 'revoked' && !l.revoked) return false;
+      if (f === 'active' && (l.revoked || (l.expiresAt && Date.parse(l.expiresAt) <= Date.now()))) return false;
+      if (f === 'expired' && !(l.expiresAt && Date.parse(l.expiresAt) <= Date.now())) return false;
+      return true;
+    })
+    .map(l => {
+      const machines = l.machines.map(m =>
+        '<div class="mono">' + m.machineId.slice(0, 12) + '… — أول: ' + fmtDate(m.firstSeen) + ' — آخر: ' + fmtDate(m.lastSeen) + '</div>').join('') || '<span class="muted">لا يوجد</span>';
+      const dl = l.expiresAt && !l.revoked ? daysLeft(l.expiresAt) : null;
+      return '<tr>' +
+        '<td class="key">' + l.key + '</td>' +
+        '<td>' + (l.note || '—') + '</td>' +
+        '<td>' + statusBadge(l) + '</td>' +
+        '<td>' + fmtDate(l.expiresAt) + (dl !== null ? '<div class="mono">باقي ' + dl + ' يوم</div>' : '') + '</td>' +
+        '<td>' + l.machineCount + '/' + l.maxMachines + '<div class="machines">' + machines + '</div></td>' +
+        '<td>' + fmtDate(l.lastActivation) + '</td>' +
+        '<td>' + fmtDate(l.lastValidation) + '</td>' +
+        '<td><div class="actions">' +
+        (l.revoked
+          ? '<button class="green" onclick="setRevoked(\'' + l.key + '\',false)">تفعيل</button>'
+          : '<button class="danger" onclick="setRevoked(\'' + l.key + '\',true)">تعطيل</button>') +
+        '<button class="ghost" onclick="extend(\'' + l.key + '\')">تمديد +30</button>' +
+        '<button class="danger" onclick="delLic(\'' + l.key + '\')">حذف</button>' +
+        '</div></td></tr>';
+    }).join('');
+  document.getElementById('licTbody').innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">لا توجد نتائج</td></tr>';
+}
+
+async function setRevoked(key, revoked) {
+  await api('/api/admin/licenses/revoke', { method: 'POST', body: JSON.stringify({ key, revoked }) });
+  toast(revoked ? 'تم تعطيل ' + key : 'تم تفعيل ' + key);
+  refresh();
+}
+
+async function extend(key) {
+  await api('/api/admin/licenses/extend', { method: 'POST', body: JSON.stringify({ key, days: 30 }) });
+  toast('تم تمديد ' + key + ' بـ 30 يوم');
+  refresh();
+}
+
+async function delLic(key) {
+  if (!confirm('حذف المفتاح ' + key + ' نهائياً؟')) return;
+  await api('/api/admin/licenses/' + encodeURIComponent(key), { method: 'DELETE' });
+  toast('تم حذف ' + key);
+  refresh();
+}
+
+function refresh() { loadStats().catch(console.error); loadLicenses().catch(console.error); }
+
+function showLogin() {
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('mainArea').classList.add('hidden');
+}
+function showMain() {
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('mainArea').classList.remove('hidden');
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const pass = document.getElementById('loginPass').value;
+  try {
+    const data = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: pass }) });
+    token = data.token;
+    localStorage.setItem('lx_admin_token', token);
+    showMain();
+    refresh();
+  } catch (e) { toast('كلمة المرور غير صحيحة'); }
+});
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  token = ''; localStorage.removeItem('lx_admin_token'); showLogin();
+});
+document.getElementById('genBtn').addEventListener('click', async () => {
+  try {
+    const data = await api('/api/admin/licenses', {
+      method: 'POST',
+      body: JSON.stringify({
+        count: parseInt(document.getElementById('genCount').value) || 1,
+        days: parseInt(document.getElementById('genDays').value) || 365,
+        maxMachines: parseInt(document.getElementById('genMachines').value) || 1,
+        note: document.getElementById('genNote').value
+      })
+    });
+    document.getElementById('genKeys').value = data.keys.join('\n');
+    document.getElementById('genResult').classList.remove('hidden');
+    toast('تم توليد ' + data.keys.length + ' مفتاح');
+    refresh();
+  } catch (e) { toast('فشل التوليد: ' + e.message); }
+});
+document.getElementById('searchBox').addEventListener('input', loadLicenses);
+document.getElementById('filterSel').addEventListener('change', loadLicenses);
+
+(async () => {
+  if (!token) return showLogin();
+  try {
+    await api('/api/admin/stats');
+    showMain();
+    refresh();
+  } catch (e) { showLogin(); }
+})();
+</script>
+</body>
+</html>

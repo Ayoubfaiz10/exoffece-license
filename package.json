@@ -1,0 +1,15 @@
+{
+  "name": "lexoffece-license-server",
+  "version": "1.0.0",
+  "description": "License server + admin panel for LexOffece",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
