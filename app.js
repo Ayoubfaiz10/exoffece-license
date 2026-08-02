@@ -67,6 +67,15 @@ app.get('/', (_req, res) => {
   res.redirect('/admin');
 });
 
+app.get('/api/keepalive', async (_req, res) => {
+  try {
+    await store.keepAlive();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: 'db_unavailable' });
+  }
+});
+
 /* ─── Public API (used by the desktop app) ─── */
 
 app.post('/api/activate', async (req, res) => {

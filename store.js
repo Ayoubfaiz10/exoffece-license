@@ -17,7 +17,10 @@ async function initStore() {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
-      max: 5
+      max: 3,
+      connectionTimeoutMillis: 25000,
+      query_timeout: 25000,
+      idleTimeoutMillis: 30000
     });
     await pool.query(`CREATE TABLE IF NOT EXISTS licenses (
       key TEXT PRIMARY KEY,
@@ -67,4 +70,11 @@ function getStore() {
   return store;
 }
 
-module.exports = { initStore, saveStore, getStore, USE_PG };
+async function keepAlive() {
+  if (USE_PG) {
+    if (!pool) await initStore();
+    await pool.query('SELECT 1');
+  }
+}
+
+module.exports = { initStore, saveStore, getStore, keepAlive, USE_PG };
