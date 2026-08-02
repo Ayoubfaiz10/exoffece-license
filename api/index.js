@@ -19,12 +19,6 @@ async function initWithRetry(attempts) {
 }
 
 module.exports = async (req, res) => {
-  if (req.url.startsWith('/api/ping')) {
-    const ms = parseInt((req.url.split('ms=')[1] || '1000'), 10);
-    await new Promise(r => setTimeout(r, ms));
-    res.status(200).json({ ok: true, slept: ms });
-    return;
-  }
   if (req.url === '/' || req.url === '/health') {
     try {
       if (!initPromise) {
