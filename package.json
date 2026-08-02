@@ -1,15 +1,19 @@
 {
   "name": "lexoffece-license-server",
   "version": "1.0.0",
-  "description": "License server + admin panel for LexOffece",
+  "description": "License server + admin panel for LexOffece (Vercel-compatible)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "serverless-http": "^3.2.0"
   }
 }
