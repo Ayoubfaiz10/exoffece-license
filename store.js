@@ -1,5 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const dns = require('dns');
+
+dns.setDefaultResultOrder('ipv4first');
 
 const DATA_FILE = path.join(__dirname, 'data', 'licenses.json');
 const ON_VERCEL = !!process.env.VERCEL;
@@ -18,8 +21,8 @@ async function initStore() {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
       max: 3,
-      connectionTimeoutMillis: 25000,
-      query_timeout: 25000,
+      connectionTimeoutMillis: 10000,
+      query_timeout: 10000,
       idleTimeoutMillis: 30000
     });
     await pool.query(`CREATE TABLE IF NOT EXISTS licenses (
