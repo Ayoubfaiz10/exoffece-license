@@ -63,6 +63,10 @@ app.use('/admin', express.static(publicDir));
 
 app.get('/health', (_req, res) => res.json({ ok: true, ts: todayISO() }));
 
+app.get('/', (_req, res) => {
+  res.redirect('/admin');
+});
+
 /* ─── Public API (used by the desktop app) ─── */
 
 app.post('/api/activate', async (req, res) => {
