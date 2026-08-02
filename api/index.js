@@ -19,6 +19,35 @@ async function initWithRetry(attempts) {
 }
 
 module.exports = async (req, res) => {
+  if (req.url.startsWith('/api/diag')) {
+    const dns = require('dns');
+    const net = require('net');
+    const tls = require('tls');
+    const host = 'ep-tiny-base-ayfqvpkg-pooler.c-5.us-east-2.aws.neon.tech';
+    const out = {};
+    let s = Date.now();
+    try {
+      const addrs = await new Promise((resolve, reject) => dns.lookup(host, { all: true }, (e, a) => e ? reject(e) : resolve(a)));
+      out.dns = { ms: Date.now() - s, addrs: addrs.slice(0, 4) };
+    } catch (e) { out.dns_err = { ms: Date.now() - s, msg: e.message }; }
+    s = Date.now();
+    try {
+      await new Promise((resolve, reject) => {
+        const sock = net.connect(5432, host, () => { out.tcp = Date.now() - s; sock.destroy(); resolve(); });
+        sock.setTimeout(15000, () => { sock.destroy(); reject(new Error('TCP timeout 15s')); });
+        sock.on('error', reject);
+      });
+    } catch (e) { out.tcp_err = { ms: Date.now() - s, msg: e.message }; }
+    s = Date.now();
+    try {
+      await new Promise((resolve, reject) => {
+        const sock = tls.connect({ host, port: 5432, rejectUnauthorized: false, timeout: 15000 }, () => { out.tls = Date.now() - s; sock.end(); resolve(); });
+        sock.on('error', reject);
+      });
+    } catch (e) { out.tls_err = { ms: Date.now() - s, msg: e.message }; }
+    res.status(200).json({ ok: true, out });
+    return;
+  }
   if (req.url === '/' || req.url === '/health') {
     try {
       if (!initPromise) {
