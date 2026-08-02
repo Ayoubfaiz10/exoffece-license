@@ -34,14 +34,14 @@ module.exports = async (req, res) => {
     try {
       await new Promise((resolve, reject) => {
         const sock = net.connect(5432, host, () => { out.tcp = Date.now() - s; sock.destroy(); resolve(); });
-        sock.setTimeout(15000, () => { sock.destroy(); reject(new Error('TCP timeout 15s')); });
+        sock.setTimeout(5000, () => { sock.destroy(); reject(new Error('TCP timeout 5s')); });
         sock.on('error', reject);
       });
     } catch (e) { out.tcp_err = { ms: Date.now() - s, msg: e.message }; }
     s = Date.now();
     try {
       await new Promise((resolve, reject) => {
-        const sock = tls.connect({ host, port: 5432, rejectUnauthorized: false, timeout: 15000 }, () => { out.tls = Date.now() - s; sock.end(); resolve(); });
+        const sock = tls.connect({ host, port: 5432, rejectUnauthorized: false, timeout: 5000 }, () => { out.tls = Date.now() - s; sock.end(); resolve(); });
         sock.on('error', reject);
       });
     } catch (e) { out.tls_err = { ms: Date.now() - s, msg: e.message }; }
